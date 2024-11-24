@@ -1,4 +1,5 @@
-import { getAllPosts, createNewUserPost } from "../models/postsModel.js";
+import { getAllPosts, createNewUserPost, updatePost } from "../models/postsModel.js";
+import generateDescription from "../services/gemniService.js";
 import fs from "fs";
 
 export async function listPost (req, res){
@@ -21,7 +22,7 @@ export async function userNewPost(req, res) {
 
 export async function imageUpload(req, res) {
     const newImage = {
-        descricao: "",
+        description: "",
         imageUrl: req.file.originalname,
         alt: ""
     };
@@ -37,3 +38,26 @@ export async function imageUpload(req, res) {
     }
 }
 
+
+export async function updateNewPost(req, res) {
+    const id = req.params.id;
+    const imgUrl = `http://localhost:300/${id}.png`
+
+    try {
+        const imageBuffer = fs.readFileSync(`uploads/${id}.png`)
+        const description = await generateDescription(imageBuffer)
+
+        const post = {
+            imageUrl: imgUrl,
+            description: description,
+            alt: req.body.alt
+        }
+
+        const createdPost = await updatePost(id, post);
+        res.status(200).json(createdPost);
+        console.log('Sucess')
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({"Error":"Requisition Failure"});
+    }
+}
